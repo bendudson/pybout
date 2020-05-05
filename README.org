@@ -1,0 +1,48 @@
+* PyBOUT
+
+Code generator for [[https://github.com/boutproject/BOUT-dev/][BOUT++]] in python. Example:
+
+#+BEGIN_SRC python :results output
+import pybout
+
+f = pybout.Field("f")
+g = pybout.Field("g")
+
+f.ddt = g
+g.ddt = -f
+
+model = pybout.PhysicsModel(f, g)
+
+print(str(model))  # Generates C++ code
+#+END_SRC
+
+#+RESULTS:
+#+begin_example c++
+
+        #include "bout/physicsmodel.hxx"
+        
+        class Model : public PhysicsModel {
+        private:
+          // Evolving fields
+          Field3D f;
+Field3D g;
+        
+        protected:
+          int init(bool restarting) override {
+        
+            // Evolving quantities
+            SOLVE_FOR(f);
+SOLVE_FOR(g);
+            return 0;
+          }
+        
+          int rhs(BoutReal time) override {
+            ddt(f) = g;
+ddt(g) = f;
+            return 0;
+          }
+        };
+
+        BOUTMAIN(Model);
+        
+#+end_example
